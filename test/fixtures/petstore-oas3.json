@@ -1,0 +1,73 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Petstore (fixture)", "version": "1.0.0" },
+  "servers": [{ "url": "https://petstore.example/v1" }],
+  "paths": {
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "summary": "List all pets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Max number of pets to return",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["available", "pending", "sold"] }
+          }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      },
+      "post": {
+        "operationId": "createPet",
+        "summary": "Create a pet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NewPet" }
+            }
+          }
+        },
+        "responses": { "201": { "description": "created" } }
+      }
+    },
+    "/pets/{petId}": {
+      "parameters": [
+        {
+          "name": "petId",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "operationId": "getPetById",
+        "description": "Fetch one pet by its id",
+        "responses": { "200": { "description": "ok" } }
+      },
+      "delete": {
+        "responses": { "204": { "description": "deleted" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "NewPet": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "description": "Pet name" },
+          "tag": { "type": "string" },
+          "age": { "type": "integer" }
+        }
+      }
+    }
+  }
+}
