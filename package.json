@@ -1,0 +1,60 @@
+{
+  "name": "@swayam/api2mcp",
+  "version": "0.1.0",
+  "description": "Serve any OpenAPI 3.x / Swagger 2.x API as a local MCP (Model Context Protocol) server over stdio, proxying tool calls to the upstream HTTP API.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "api2mcp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "openapi",
+    "swagger",
+    "api",
+    "proxy",
+    "claude",
+    "stdio"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swayam5342/api2mcp.git"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^12.0.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "commander": "^14.0.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
