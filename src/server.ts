@@ -10,12 +10,21 @@ import { mapOperationsToTools } from "./tools.js";
 const SERVER_NAME = "api2mcp";
 const SERVER_VERSION = "0.1.0";
 
+/** Optional dependencies for {@link createServer}; primarily for testing. */
+export interface CreateServerOptions {
+  /** HTTP implementation used for upstream calls (default: global fetch). */
+  fetchImpl?: typeof fetch;
+}
+
 /**
  * Build an MCP server wired to the configured upstream API: loads the spec,
  * registers one tool per operation, and proxies tool calls upstream. The
  * caller connects a transport (the CLI uses stdio).
  */
-export async function createServer(config: Api2McpConfig): Promise<McpServer> {
+export async function createServer(
+  config: Api2McpConfig,
+  options: CreateServerOptions = {},
+): Promise<McpServer> {
   const logger = createLogger(config.debug === true);
 
   const doc = await loadSpec(config.url);
@@ -37,6 +46,7 @@ export async function createServer(config: Api2McpConfig): Promise<McpServer> {
     fixedParams: config.fixedParams ?? {},
     timeout: config.timeout,
     logger,
+    ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
   };
 
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });

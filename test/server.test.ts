@@ -84,13 +84,22 @@ describe("createServer", () => {
     expect(tools.map((t) => t.name)).toEqual(["getX"]);
   });
 
-  it("tool calls surface the not-yet-implemented proxy as a tool error", async () => {
-    const server = await createServer({ url: oas3Path });
+  it("proxies a tool call end-to-end over the MCP protocol (mocked fetch)", async () => {
+    const seen: string[] = [];
+    const fetchImpl = (async (input: Parameters<typeof fetch>[0]) => {
+      seen.push(String(input));
+      return new Response('{"id":"p1","name":"Felix"}', { status: 200 });
+    }) as typeof fetch;
+
+    const server = await createServer({ url: oas3Path }, { fetchImpl });
     const client = await connect(server);
     const result = await client.callTool({
       name: "getPetById",
       arguments: { petId: "p1" },
     });
-    expect(result.isError).toBe(true);
+    expect(result.isError).toBeUndefined();
+    expect(seen).toEqual(["https://petstore.example/v1/pets/p1"]);
+    const content = result.content as Array<{ type: string; text: string }>;
+    expect(content[0]!.text).toBe('{"id":"p1","name":"Felix"}');
   });
 });

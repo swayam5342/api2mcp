@@ -24,6 +24,12 @@ export interface ToolDefinition {
   /** Path template as written in the spec, e.g. `/pets/{petId}`. */
   pathTemplate: string;
   params: ToolParam[];
+  /**
+   * Spec params matched by a fixed-param key: absent from the input schema
+   * (the LLM never sees them) but kept here so the proxy can inject the
+   * configured value into the right location upstream.
+   */
+  hiddenParams: ToolParam[];
   /** Zod raw shape for the tool's input (what the MCP SDK takes). */
   inputSchema: Record<string, z.ZodTypeAny>;
 }
@@ -95,10 +101,14 @@ export function mapOperationsToTools(
     usedNames.add(name);
 
     const params: ToolParam[] = [];
+    const hiddenParams: ToolParam[] = [];
     const inputSchema: Record<string, z.ZodTypeAny> = {};
 
     for (const p of op.params) {
-      if (hidden.has(p.name)) continue;
+      if (hidden.has(p.name)) {
+        hiddenParams.push({ name: p.name, upstreamName: p.name, in: p.in, required: p.required });
+        continue;
+      }
       let field = jsonSchemaToZod(p.schema);
       if (p.description && !p.schema?.description) field = field.describe(p.description);
       if (!p.required) field = field.optional();
@@ -107,7 +117,7 @@ export function mapOperationsToTools(
     }
 
     if (op.body) {
-      addBodyFields(op, hidden, params, inputSchema);
+      addBodyFields(op, hidden, params, hiddenParams, inputSchema);
     }
 
     tools.push({
@@ -116,6 +126,7 @@ export function mapOperationsToTools(
       method: op.method,
       pathTemplate: op.path,
       params,
+      hiddenParams,
       inputSchema,
     });
   }
@@ -131,6 +142,7 @@ function addBodyFields(
   op: NormalizedOperation,
   hidden: Set<string>,
   params: ToolParam[],
+  hiddenParams: ToolParam[],
   inputSchema: Record<string, z.ZodTypeAny>,
 ): void {
   const body = op.body!;
@@ -157,7 +169,15 @@ function addBodyFields(
   const properties = schema.properties as Record<string, JsonSchema>;
   const required = new Set(Array.isArray(schema.required) ? schema.required : []);
   for (const [propName, propSchema] of Object.entries(properties)) {
-    if (hidden.has(propName)) continue;
+    if (hidden.has(propName)) {
+      hiddenParams.push({
+        name: propName,
+        upstreamName: propName,
+        in: "body",
+        required: false,
+      });
+      continue;
+    }
     const exposedName = inputSchema[propName] === undefined ? propName : `body_${propName}`;
     if (inputSchema[exposedName] !== undefined) continue; // give up on double collision
     const isRequired = body.required && required.has(propName);

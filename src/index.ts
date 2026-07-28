@@ -8,3 +8,5 @@
 export type { Api2McpConfig } from "./config.js";
 export { resolveConfig } from "./config.js";
 export { createServer } from "./server.js";
+export type { CreateServerOptions } from "./server.js";
+
