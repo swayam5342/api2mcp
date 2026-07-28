@@ -4,6 +4,7 @@
   "description": "Serve any OpenAPI 3.x / Swagger 2.x API as a local MCP (Model Context Protocol) server over stdio, proxying tool calls to the upstream HTTP API.",
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@11.1.3",
   "engines": {
     "node": ">=18"
   },
