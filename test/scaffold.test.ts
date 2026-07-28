@@ -8,9 +8,8 @@ describe("scaffold", () => {
     expect(typeof createServer).toBe("function");
   });
 
-  it("stubs reject until implemented", async () => {
+  it("createServer stub rejects until implemented", async () => {
     const cfg: Api2McpConfig = { url: "./openapi.json" };
-    await expect(resolveConfig({})).rejects.toThrow("not implemented");
     await expect(createServer(cfg)).rejects.toThrow("not implemented");
   });
 });
