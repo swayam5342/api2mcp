@@ -1,5 +1,5 @@
 /**
- * @swayam/api2mcp — public library surface.
+ * @swayam5342/api2mcp — public library surface.
  *
  * Exports are intentionally minimal: a config type, a config resolver, and a
  * server factory. Everything else is internal.

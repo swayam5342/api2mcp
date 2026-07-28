@@ -1,6 +1,6 @@
 {
   "name": "@swayam5342/api2mcp",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Serve any OpenAPI 3.x / Swagger 2.x API as a local MCP (Model Context Protocol) server over stdio, proxying tool calls to the upstream HTTP API.",
   "type": "module",
   "license": "MIT",
