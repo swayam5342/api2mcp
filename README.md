@@ -1,41 +1,102 @@
-# @swayam5342/api2mcp
+<div align="center">
 
-Serve any OpenAPI 3.x / Swagger 2.x API as a local [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server over stdio. Every operation in the spec becomes an MCP tool; when a tool is called, the request is proxied to the real upstream HTTP API with your configured auth.
+<img src="docs/icon.svg" width="88" height="88" alt="api2mcp">
+
+# api2mcp
+
+**Your API, as tools Claude can call.**
+
+`@swayam5342/api2mcp` serves any **OpenAPI 3.x / Swagger 2.x** API as a local [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server over **stdio**, written in **TypeScript**. Every operation in the spec **becomes an MCP tool**; when a tool is called, the request is **proxied to the real upstream API with your configured auth**, which the model never sees.
+
+[![npm](https://img.shields.io/npm/v/@swayam5342/api2mcp?style=flat-square&logo=npm&logoColor=white&labelColor=0d3a55&color=4cb3f0)](https://www.npmjs.com/package/@swayam5342/api2mcp)
+[![Node](https://img.shields.io/badge/Node.js-18%2B-4cb3f0?style=flat-square&logo=nodedotjs&logoColor=white&labelColor=0d3a55)](package.json)
+[![MCP](https://img.shields.io/badge/MCP-stdio-4cb3f0?style=flat-square&logo=anthropic&logoColor=white&labelColor=0d3a55)](#use-with-claude-desktop)
+[![CI](https://img.shields.io/github/actions/workflow/status/swayam5342/api2mcp/ci.yml?branch=master&style=flat-square&logo=githubactions&logoColor=white&labelColor=0d3a55&color=4cb3f0&label=CI)](.github/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-4cb3f0?style=flat-square&logo=opensourceinitiative&logoColor=white&labelColor=0d3a55)](LICENSE)
+
+[**Website**](https://github.swayam.li/api2mcp/) &nbsp;&middot;&nbsp; [Quick Start](#quick-start) &nbsp;&middot;&nbsp; [CLI Reference](#cli-reference) &nbsp;&middot;&nbsp; [Passing Secrets Safely](#passing-secrets-safely) &nbsp;&middot;&nbsp; [Library API](#library-api)
+
+</div>
+
+<br>
+
+## Table of Contents
+
+| | |
+| :--- | :--- |
+| **Overview** | [How It Works](#how-it-works) &middot; [How Operations Become Tools](#how-operations-become-tools) |
+| **Setup** | [Prerequisites](#prerequisites) &middot; [Quick Start](#quick-start) &middot; [Install](#install) &middot; [Use with Claude Desktop](#use-with-claude-desktop) &middot; [Use with Claude Code](#use-with-claude-code) |
+| **Reference** | [CLI Reference](#cli-reference) &middot; [Configuration](#configuration) &middot; [Library API](#library-api) |
+| **Security** | [Passing Secrets Safely](#passing-secrets-safely) &middot; [Fixed Params: Auth the LLM Never Sees](#fixed-params-auth-the-llm-never-sees) |
+| **Examples** | [Worked Example: Petstore](#worked-example-petstore) &middot; [Verification & Testing](#verification--testing) |
+
+<br>
+
+## How It Works
 
 It does exactly two things:
 
-1. **Serve** — given a spec (file path or URL), run an MCP server on stdio so Claude Desktop, Claude Code, and other MCP clients can launch it as a subprocess. One spec → one server.
-2. **Proxy** — forward tool calls to the upstream API using the method/path/params from the spec, injecting your configured headers and fixed params, and return the response.
+| | Step | What happens |
+| :---: | :--- | :--- |
+| 1 | **Serve** | Given a spec (file path or URL), run an MCP server on stdio so Claude Desktop, Claude Code and other MCP clients can launch it as a subprocess. One spec, one server. |
+| 2 | **Proxy** | Forward tool calls to the upstream API using the method, path and params from the spec, inject your configured headers and fixed params, and return the response. |
 
-No telemetry, no database, no eval. The only network egress is the upstream calls you configure (plus fetching the spec itself if you pass a URL).
+> [!NOTE]
+> No telemetry, no database, no eval. The only network egress is the upstream calls you configure, plus fetching the spec itself if you pass a URL.
 
-## Quick start
+<br>
+
+## Prerequisites
+
+| Requirement | When |
+| :--- | :--- |
+| **Node.js 18+** | Always (`npx` or a global install). |
+| **An OpenAPI 3.x or Swagger 2.x spec** | A file path or a URL. |
+| **pnpm** | Only to build from source. |
+
+<br>
+
+## Quick Start
 
 ```bash
 npx @swayam5342/api2mcp --url https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
-That's a running MCP server on stdio — every Petstore endpoint is now a tool. Point an MCP client at it (see below) and ask it to list pets.
+That's a running MCP server on stdio: every Petstore endpoint is now a tool. Point an MCP client at it ([below](#use-with-claude-desktop)) and ask it to list pets.
+
+<br>
 
 ## Install
 
-```bash
-# no install needed
-npx @swayam5342/api2mcp --url ./openapi.json
+<details open>
+<summary><b>No install</b> (<code>npx</code>)</summary>
 
-# or globally
+```bash
+npx @swayam5342/api2mcp --url ./openapi.json
+```
+
+</details>
+
+<details>
+<summary><b>Global install</b> (<code>npm install -g</code>)</summary>
+
+```bash
 npm install -g @swayam5342/api2mcp
 api2mcp --url ./openapi.json
 ```
 
-Requires Node.js >= 18.
+</details>
+
+<br>
 
 ## Use with Claude Desktop
 
-Add to your Claude Desktop config file:
+Add this to your Claude Desktop config file:
 
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+| OS | Config file |
+| :--- | :--- |
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 
 ```json
 {
@@ -53,44 +114,59 @@ Add to your Claude Desktop config file:
 }
 ```
 
-Restart Claude Desktop; the spec's operations appear as tools named after their `operationId` (e.g. `addPet`, `getPetById`).
+Restart Claude Desktop; the spec's operations appear as tools named after their `operationId` (for example `addPet`, `getPetById`).
 
-## CLI reference
+<br>
+
+## Use with Claude Code
+
+```bash
+claude mcp add petstore -- npx -y @swayam5342/api2mcp --url https://petstore3.swagger.io/api/v3/openapi.json
+```
+
+> [!TIP]
+> Pass secrets with `-e`, not as arguments: `claude mcp add my-api -e API_HEADERS='{"Authorization":"Bearer YOUR_TOKEN"}' -- npx -y @swayam5342/api2mcp --url https://api.example.com/openapi.json`
+
+<br>
+
+## CLI Reference
 
 ```text
 api2mcp --url <spec> [options]
 ```
 
 | Flag | Short | Description |
-| ---- | ----- | ----------- |
-| `--url <url>` | `-u` | OpenAPI/Swagger spec — file path or URL |
-| `--base-url <url>` | `-b` | Upstream base URL (overrides the spec's `servers` / `host`+`basePath`) |
-| `--headers <json>` | — | Upstream headers as a JSON object string |
-| `--prefix <prefix>` | `-p` | Prefix for generated tool names (`myapi_listPets`) |
-| `--timeout <ms>` | `-t` | Upstream request timeout in ms (default 30000) |
-| `--fixed-params <params>` | `-f` | Params injected into every upstream request, hidden from the LLM (`key=value` pairs or JSON) |
-| `--debug` | `-d` | Verbose logging to stderr (secrets redacted) |
+| :--- | :--- | :--- |
+| `--url <url>` | `-u` | OpenAPI/Swagger spec: file path or URL. |
+| `--base-url <url>` | `-b` | Upstream base URL (overrides the spec's `servers` / `host`+`basePath`). |
+| `--headers <json>` | none | Upstream headers as a JSON object string. |
+| `--prefix <prefix>` | `-p` | Prefix for generated tool names (`myapi_listPets`). |
+| `--timeout <ms>` | `-t` | Upstream request timeout in ms (default `30000`). |
+| `--fixed-params <params>` | `-f` | Params injected into every upstream request, hidden from the LLM (`key=value` pairs or JSON). |
+| `--debug` | `-d` | Verbose logging to stderr (secrets redacted). |
 
-`--headers` intentionally has no short flag: `-h` shows help.
+> [!NOTE]
+> `--headers` intentionally has no short flag: `-h` shows help.
+
+<br>
 
 ## Configuration
 
 Every flag can also come from environment variables or a config file. Precedence: **CLI flags > environment variables > config file**.
 
-### Environment variables
-
 | Variable | Meaning |
-| -------- | ------- |
-| `OPENAPI_URL` | Spec file path or URL |
-| `API_BASE_URL` | Upstream base URL |
-| `API_TIMEOUT` | Timeout in ms |
-| `API_HEADERS` | Headers as a JSON object string |
-| `API_FIXED_PARAMS` | Fixed params (`key=value` or JSON) |
-| `DEBUG` | Debug logging (`0`/`false`/`off` disable) |
+| :--- | :--- |
+| `OPENAPI_URL` | Spec file path or URL. |
+| `API_BASE_URL` | Upstream base URL. |
+| `API_TIMEOUT` | Timeout in ms. |
+| `API_HEADERS` | Headers as a JSON object string. |
+| `API_FIXED_PARAMS` | Fixed params (`key=value` or JSON). |
+| `DEBUG` | Debug logging (`0`, `false` or `off` disable it). |
 
-### Config file
+The first of `api2mcp.json`, `api2mcp.config.json` or `.api2mcp.json` found in the working directory is used:
 
-The first of `api2mcp.json`, `api2mcp.config.json`, `.api2mcp.json` found in the working directory is used:
+<details open>
+<summary><b>Config file</b> (<code>api2mcp.json</code>)</summary>
 
 ```json
 {
@@ -103,9 +179,14 @@ The first of `api2mcp.json`, `api2mcp.config.json`, `.api2mcp.json` found in the
 }
 ```
 
-## Passing secrets safely
+</details>
 
-**Don't put API keys in `--headers` or `--fixed-params` on the command line** — process arguments are visible to other users on the machine (`ps`). Use your MCP client's `env` field instead:
+<br>
+
+## Passing Secrets Safely
+
+> [!IMPORTANT]
+> **Don't put API keys in `--headers` or `--fixed-params` on the command line.** Process arguments are visible to other users on the machine (`ps`). Use your MCP client's `env` field instead.
 
 ```json
 {
@@ -124,7 +205,9 @@ The first of `api2mcp.json`, `api2mcp.config.json`, `.api2mcp.json` found in the
 
 All header and fixed-param values are redacted (`***`) from every log line and error message, including upstream error bodies that echo them back.
 
-## Fixed params: auth the LLM never sees
+<br>
+
+## Fixed Params: Auth the LLM Never Sees
 
 Fixed params are injected into **every** upstream request but are stripped from the tool schemas, so the model never sees the key and cannot leak or misuse it:
 
@@ -132,30 +215,46 @@ Fixed params are injected into **every** upstream request but are stripped from 
 API_FIXED_PARAMS="apiKey=YOUR_KEY" npx @swayam5342/api2mcp --url ./openapi.json
 ```
 
-- If the spec declares a matching parameter (query, or a body property), the value is injected in that declared location.
-- Unknown keys are sent as query parameters.
-- Accepts `key=value`, comma-separated `a=1,b=2`, or a JSON object string.
+| Case | Where the value goes |
+| :--- | :--- |
+| The spec declares a matching parameter (query, or a body property) | Injected in that declared location. |
+| The key isn't declared | Sent as a query parameter. |
 
-## How operations become tools
+Accepts `key=value`, comma-separated `a=1,b=2`, or a JSON object string.
+
+<br>
+
+## How Operations Become Tools
 
 | Spec | Tool |
-| ---- | ---- |
-| `operationId: listPets` | tool `listPets` (with `--prefix pets`: `pets_listPets`) |
-| no operationId, `GET /pets/{petId}` | tool `get_pets_petId` |
-| `summary` / `description` | tool description (fallback: `GET /pets`) |
-| path/query/header params | top-level input fields, required per the spec |
-| JSON request body (object) | properties flattened into top-level input fields |
-| JSON request body (non-object) | single `body` input field |
+| :--- | :--- |
+| `operationId: listPets` | Tool `listPets` (with `--prefix pets`: `pets_listPets`). |
+| No operationId, `GET /pets/{petId}` | Tool `get_pets_petId`. |
+| `summary` / `description` | Tool description (fallback: `GET /pets`). |
+| Path, query and header params | Top-level input fields, required per the spec. |
+| JSON request body (object) | Properties flattened into top-level input fields. |
+| JSON request body (non-object) | A single `body` input field. |
 
-v1 limitations: JSON request bodies only (no multipart/form-urlencoded), cookie params ignored, and every operation is registered directly (no on-demand mode for very large specs).
+> [!WARNING]
+> v1 limitations: JSON request bodies only (no multipart or form-urlencoded), cookie params are ignored, and every operation is registered directly (no on-demand mode for very large specs).
 
-## Worked example: Petstore
+<br>
+
+## Worked Example: Petstore
+
+<details open>
+<summary><b>Run it with a prefix and debug logs</b> (<code>--prefix pets --debug</code>)</summary>
 
 ```bash
 npx @swayam5342/api2mcp --url https://petstore3.swagger.io/api/v3/openapi.json --prefix pets --debug
 ```
 
-stderr shows the redacted config and `registered N tools ...`, then the server waits on stdio. In Claude Desktop:
+stderr shows the redacted config and `registered N tools ...`, then the server waits on stdio.
+
+</details>
+
+<details>
+<summary><b>The same server in Claude Desktop</b> (<code>claude_desktop_config.json</code>)</summary>
 
 ```json
 {
@@ -173,7 +272,11 @@ stderr shows the redacted config and `registered N tools ...`, then the server w
 }
 ```
 
-Then ask Claude: *"Find available pets in the store"* — it calls `pets_findPetsByStatus` with `status: "available"`, the call is proxied to `https://petstore3.swagger.io/api/v3/pet/findByStatus?status=available`, and the JSON response comes back as the tool result.
+</details>
+
+Then ask Claude *"Find available pets in the store"*. It calls `pets_findPetsByStatus` with `status: "available"`, the call is proxied to `https://petstore3.swagger.io/api/v3/pet/findByStatus?status=available`, and the JSON response comes back as the tool result.
+
+<br>
 
 ## Library API
 
@@ -186,7 +289,26 @@ const server = await createServer(config);                      // an SDK McpSer
 await server.connect(new StdioServerTransport());               // or any other transport
 ```
 
-Exports: `createServer(config, options?)`, `resolveConfig(cliFlags, options?)`, and the types `Api2McpConfig`, `CreateServerOptions`. `options.fetchImpl` lets you swap the HTTP layer (e.g. for tests).
+| Export | What it is |
+| :--- | :--- |
+| `createServer(config, options?)` | Builds an MCP SDK `McpServer` with every operation registered as a tool. `options.fetchImpl` swaps the HTTP layer (for example in tests). |
+| `resolveConfig(cliFlags, options?)` | Merges CLI flags, environment variables and the config file, in that precedence. |
+| `Api2McpConfig`, `CreateServerOptions` | Types. |
+
+<br>
+
+## Verification & Testing
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm build
+pnpm test
+```
+
+The same four steps run in GitHub Actions on every push and pull request to `master` (`.github/workflows/ci.yml`). Tests use the Petstore OpenAPI 3 and Swagger 2 specs in `test/fixtures/`.
+
+<br>
 
 ## License
 
