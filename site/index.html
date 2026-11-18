@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>api2mcp: any OpenAPI spec as MCP tools</title>
+<meta name="description" content="Serve any OpenAPI 3.x or Swagger 2.x API as a local MCP server over stdio. Every operation becomes a tool; calls are proxied to the real API with your auth, which the model never sees.">
+<meta name="theme-color" content="#000000">
+<link rel="canonical" href="https://github.swayam.li/api2mcp/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://github.swayam.li/api2mcp/">
+<meta property="og:title" content="api2mcp: any OpenAPI spec as MCP tools">
+<meta property="og:description" content="One npx command turns a spec into tools for Claude Desktop, Claude Code and any MCP client. No telemetry, no database.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav wrap">
+  <a class="wordmark" href="#top" aria-label="api2mcp, back to top">
+    <svg viewBox="0 0 44 44" aria-hidden="true"><rect x="0" y="6" width="16" height="32" fill="#f2f2f2"/><rect x="18" y="19" width="8" height="6" fill="#7cc8f5"/><rect x="28" y="6" width="16" height="9" fill="#4cb3f0"/><rect x="28" y="17.5" width="16" height="9" fill="#4cb3f0"/><rect x="28" y="29" width="16" height="9" fill="#4cb3f0"/></svg>api2mcp
+  </a>
+  <nav aria-label="Main">
+    <ul>
+      <li><a class="link" href="#tools">Spec to tools</a></li>
+      <li><a class="link" href="#secrets">Secrets</a></li>
+      <li><a class="link" href="#connect">Connect</a></li>
+      <li><a class="link" href="#reference">Reference</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="hero wrap" id="top" aria-labelledby="hero-title">
+  <div class="hero-copy">
+    <p class="eyebrow">TypeScript · Node 18+ · MIT · on npm</p>
+    <h1 id="hero-title" class="display">Your API, as tools Claude can call<span class="dot">.</span></h1>
+    <p class="lede">api2mcp serves any OpenAPI 3.x or Swagger 2.x spec as a local MCP server over stdio. Every operation becomes a tool. When the model calls one, the request goes to the real API with your auth injected, and the response comes back as the tool result.</p>
+    <div class="actions">
+      <a class="btn" href="#connect">Add it to Claude</a>
+      <a class="link" href="https://github.com/swayam5342/api2mcp">Source on GitHub</a>
+    </div>
+  </div>
+  <div class="hero-side">
+    <div class="cmd hero-cmd">
+      <p class="cmd-k">Every Petstore endpoint, now a tool</p>
+      <pre><code>npx @swayam5342/api2mcp --url https://petstore3.swagger.io/api/v3/openapi.json</code></pre>
+      <button class="copy" type="button">Copy</button>
+    </div>
+    <ol class="flow" role="list" aria-label="How a call flows">
+      <li><span class="flow-k">MCP client</span><b>Claude calls <code>findPetsByStatus</code></b></li>
+      <li><span class="flow-k">api2mcp</span><b>builds the request from the spec, adds your headers</b></li>
+      <li><span class="flow-k">upstream</span><b><code>GET /pet/findByStatus?status=available</code></b></li>
+      <li><span class="flow-k">back to Claude</span><b>the JSON response, as the tool result</b></li>
+    </ol>
+    <p class="nots">No telemetry. No database. No eval. The only network traffic is the upstream calls you configure, plus fetching the spec if you pass a URL.</p>
+  </div>
+</section>
+
+<!-- Spec to tools -->
+<section class="tools wrap" id="tools" aria-labelledby="tools-title">
+  <div class="sec-head">
+    <h2 id="tools-title" class="head">One operation in, one tool out</h2>
+    <p>Pick a Petstore operation to see the tool api2mcp registers for it. Path, query and header params become top-level fields; a JSON object body is flattened into them. A fixed param disappears from the schema and is injected into the request instead.</p>
+  </div>
+  <div class="conv">
+    <div class="conv-in panel">
+      <label class="field"><span>Operation</span><select id="op"></select></label>
+      <label class="field"><span>Tool prefix <small>--prefix</small></span><input id="prefix" type="text" placeholder="none" spellcheck="false" autocomplete="off" maxlength="24"></label>
+      <label class="field"><span>Fixed param <small>--fixed-params</small></span><input id="fixed" type="text" value="api_key=sk-live-1234" spellcheck="false" autocomplete="off"></label>
+      <div class="spec" aria-label="The operation in the spec">
+        <p class="spec-k">In the spec</p>
+        <pre id="spec-out"></pre>
+      </div>
+    </div>
+    <div class="conv-out">
+      <div class="term">
+        <div class="term-bar"><span>tools/list</span><span id="tool-count"></span></div>
+        <pre id="tool-out"></pre>
+      </div>
+      <div class="term">
+        <div class="term-bar"><span>the upstream request</span></div>
+        <pre id="req-out"></pre>
+      </div>
+      <p class="conv-note" id="conv-note"></p>
+    </div>
+  </div>
+</section>
+
+<!-- Secrets -->
+<section class="secrets wrap" id="secrets" aria-labelledby="sec-title">
+  <div class="sec-head">
+    <h2 id="sec-title" class="head">Auth the model never sees</h2>
+    <p>Headers and fixed params are added by api2mcp, not by the model. The key is never in a tool schema, so the model can't leak it or put it somewhere it shouldn't.</p>
+  </div>
+  <div class="board">
+    <article class="tile wide" data-c="field">
+      <p class="tile-k">Fixed params</p>
+      <h3>Injected into every request, hidden from every schema</h3>
+      <p>If the spec declares a matching parameter, the value goes in that place. Unknown keys go in the query string. Write them as <code>key=value</code>, <code>a=1,b=2</code> or a JSON object.</p>
+    </article>
+    <article class="tile" data-c="accent">
+      <p class="tile-k">Redaction</p>
+      <h3>*** in every log line</h3>
+      <p>Every header and fixed-param value is redacted from logs and error messages, even when the upstream echoes it back in an error body.</p>
+    </article>
+    <article class="tile" data-c="raised">
+      <p class="tile-k">Arguments</p>
+      <h3>Keep keys off the command line</h3>
+      <p>Other users can see process arguments with <code>ps</code>. Pass secrets through your MCP client's <code>env</code> field instead.</p>
+    </article>
+  </div>
+</section>
+
+<!-- Connect -->
+<section class="connect wrap" id="connect" aria-labelledby="con-title">
+  <div class="sec-head">
+    <h2 id="con-title" class="head">Add it to your client</h2>
+    <p>Fill in your API and copy the config. The token goes in <code>env</code>, never in <code>args</code>. Restart Claude Desktop and the operations show up as tools named after their <code>operationId</code>.</p>
+  </div>
+  <div class="gen">
+    <div class="gen-in panel">
+      <label class="field"><span>Server name</span><input id="g-name" type="text" value="petstore" spellcheck="false" autocomplete="off"></label>
+      <label class="field"><span>Spec URL or file</span><input id="g-url" type="text" value="https://petstore3.swagger.io/api/v3/openapi.json" spellcheck="false" autocomplete="off"></label>
+      <label class="field"><span>Tool prefix (optional)</span><input id="g-prefix" type="text" value="" placeholder="none" spellcheck="false" autocomplete="off"></label>
+      <label class="toggle"><input id="g-auth" type="checkbox"><span class="switch" aria-hidden="true"><span class="knob"></span></span><span>Bearer token in <code>API_HEADERS</code></span></label>
+    </div>
+    <div class="gen-out">
+      <div class="seg" role="tablist" aria-label="Client">
+        <button type="button" role="tab" aria-selected="true" data-t="desktop">Claude Desktop</button>
+        <button type="button" role="tab" aria-selected="false" data-t="code">Claude Code</button>
+      </div>
+      <div class="cmd" role="tabpanel">
+        <p class="cmd-k" id="g-where"></p>
+        <pre><code id="g-out"></code></pre>
+        <button class="copy" type="button">Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Reference -->
+<section class="ref wrap" id="reference" aria-labelledby="ref-title">
+  <div class="sec-head">
+    <h2 id="ref-title" class="head">Flags, variables, a config file</h2>
+    <p>Every setting can come from a flag, an environment variable or a config file in the working directory, in that order of precedence: flags win, then the environment, then the file.</p>
+  </div>
+  <div class="ref-grid">
+    <table>
+      <caption class="sr">Command-line flags</caption>
+      <thead><tr><th scope="col">Flag</th><th scope="col">Env</th><th scope="col">What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>-u, --url</code></td><td><code>OPENAPI_URL</code></td><td>Spec file path or URL</td></tr>
+        <tr><td><code>-b, --base-url</code></td><td><code>API_BASE_URL</code></td><td>Upstream base URL; overrides the spec's <code>servers</code></td></tr>
+        <tr><td><code>--headers</code></td><td><code>API_HEADERS</code></td><td>Upstream headers as a JSON object</td></tr>
+        <tr><td><code>-f, --fixed-params</code></td><td><code>API_FIXED_PARAMS</code></td><td>Params injected into every request, hidden from the model</td></tr>
+        <tr><td><code>-p, --prefix</code></td><td></td><td>Prefix for tool names: <code>myapi_listPets</code></td></tr>
+        <tr><td><code>-t, --timeout</code></td><td><code>API_TIMEOUT</code></td><td>Upstream timeout in ms (default 30000)</td></tr>
+        <tr><td><code>-d, --debug</code></td><td><code>DEBUG</code></td><td>Verbose logs to stderr, secrets redacted</td></tr>
+      </tbody>
+    </table>
+    <div class="ref-side">
+      <div class="cmd">
+        <p class="cmd-k">api2mcp.json (or api2mcp.config.json, .api2mcp.json)</p>
+        <pre><code>{
+  "url": "https://api.example.com/openapi.json",
+  "baseUrl": "https://api.example.com",
+  "timeout": 30000,
+  "headers": { "Authorization": "Bearer your-token" },
+  "fixedParams": { "apiKey": "your-key" },
+  "toolPrefix": "myapi"
+}</code></pre>
+        <button class="copy" type="button">Copy</button>
+      </div>
+      <div class="cmd">
+        <p class="cmd-k">Or use it as a library</p>
+        <pre><code>import { createServer, resolveConfig } from "@swayam5342/api2mcp";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
+const config = await resolveConfig({ url: "./openapi.json" });
+const server = await createServer(config);
+await server.connect(new StdioServerTransport());</code></pre>
+        <button class="copy" type="button">Copy</button>
+      </div>
+    </div>
+  </div>
+  <p class="limits"><b>Limits in v1:</b> JSON request bodies only (no multipart or form-urlencoded), cookie params are ignored, and every operation is registered up front, with no on-demand mode for very large specs. For a curated server built from the same idea, see <a class="link" href="https://plugit.swayam.li/">plugit</a>.</p>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p class="mark" aria-hidden="true">api2mcp<span class="dot">.</span></p>
+    <div class="foot-grid">
+      <div><h3>Get it</h3><ul role="list">
+        <li><a class="link" href="https://www.npmjs.com/package/@swayam5342/api2mcp">npm package</a></li>
+        <li><a class="link" href="https://github.com/swayam5342/api2mcp">Repository</a></li>
+        <li><a class="link" href="https://github.com/swayam5342/api2mcp/issues">Issues</a></li>
+      </ul></div>
+      <div><h3>Works with</h3><ul role="list">
+        <li>Claude Desktop</li>
+        <li>Claude Code</li>
+        <li>Any MCP client that launches stdio servers</li>
+      </ul></div>
+      <div><h3>Reads</h3><ul role="list">
+        <li>OpenAPI 3.x</li>
+        <li>Swagger 2.x</li>
+        <li>From a file or a URL</li>
+      </ul></div>
+    </div>
+    <div class="foot-last">
+      <p>api2mcp, built by <a class="link" href="https://github.com/swayam5342">swayam5342</a> · more at <a class="link" href="https://swayam.li">swayam.li</a></p>
+      <a class="btn btn-small" href="#top">Back to top</a>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js" defer></script>
+</body>
+</html>

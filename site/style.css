@@ -1,0 +1,60 @@
+/* api2mcp: the motif is one block fanning out into a stack of tools. */
+
+.hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: clamp(32px, 4vw, 64px); align-items: center; padding-block: clamp(40px, 6vw, 96px) var(--section); }
+@media (max-width: 1000px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+.hero-side { display: grid; gap: 4px; min-width: 0; }
+.hero-cmd pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.flow { display: grid; gap: 4px; counter-reset: f; }
+.flow li { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: center; background: var(--surface); padding: 14px 18px; }
+.flow li:nth-child(2) { background: var(--accent); color: var(--accent-ink); }
+.flow li:nth-child(2) .flow-k { color: var(--accent-ink); }
+.flow li:nth-child(3) { background: var(--field); }
+.flow-k { font: .78rem var(--code); color: var(--faint); }
+.flow b { font-weight: 500; }
+.nots { font-size: var(--step-small); color: var(--faint); margin-top: 12px; }
+@media (max-width: 520px) { .flow li { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+/* Converter */
+.conv { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 4px; }
+.conv-in { display: grid; gap: 18px; align-content: start; }
+.field small { font-family: var(--code); color: var(--t-dim); margin-left: 6px; }
+.spec { background: var(--bg); padding: 16px; }
+.spec-k { font-size: .78rem; color: var(--faint); margin-bottom: 8px; }
+.spec pre, .conv-out pre { white-space: pre; overflow-x: auto; font-size: .82rem; line-height: 1.6; }
+.spec pre { color: var(--muted); }
+.conv-out { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.conv-out .term pre { min-height: 4em; }
+#tool-out { min-height: 18em; }
+.conv-note { background: var(--surface); padding: 16px 20px; color: var(--muted); font-size: var(--step-small); }
+.hl { color: var(--accent-strong); }
+.gone { color: var(--t-err); text-decoration: line-through; }
+.inj { color: var(--t-ok); }
+@media (max-width: 900px) { .conv { grid-template-columns: minmax(0, 1fr); } }
+
+/* Generator */
+.gen { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 4px; }
+.gen-in { display: grid; gap: 18px; align-content: start; }
+.gen-out { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.gen-out .seg { display: grid; grid-template-columns: 1fr 1fr; }
+.gen-out pre { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 16em; }
+@media (max-width: 900px) { .gen { grid-template-columns: minmax(0, 1fr); } }
+
+/* Reference */
+.ref-grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 4px; align-items: start; }
+.ref-side { display: grid; gap: 4px; min-width: 0; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: .93rem; }
+th { text-align: left; font-weight: 500; color: var(--faint); font-size: .8rem; padding: 14px 16px; border-bottom: 2px solid var(--raised); }
+td { padding: 12px 16px; border-bottom: 2px solid var(--bg); vertical-align: top; color: var(--muted); }
+td:first-child { color: var(--ink); white-space: nowrap; }
+td code { background: transparent !important; padding: 0 !important; }
+.limits { margin-top: 24px; color: var(--muted); max-width: 80ch; }
+@media (max-width: 1000px) { .ref-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  table, tbody, tr, td { display: block; }
+  thead { display: none; }
+  tr { padding: 12px 16px; border-bottom: 2px solid var(--bg); }
+  td { padding: 2px 0; border: 0; }
+  td:empty { display: none; }
+}
+
+.hero-side, .conv-in, .conv-out, .gen-in, .gen-out, .ref-side { grid-template-columns: minmax(0, 1fr); }
